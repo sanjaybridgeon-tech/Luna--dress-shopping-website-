@@ -1,0 +1,96 @@
+# ==============================================================================
+# L U N A — Render Infrastructure Blueprint
+# ==============================================================================
+
+services:
+  # 1. Product Catalog & Inventory Microservice
+  - type: web
+    name: luna-product-service
+    runtime: docker
+    dockerfilePath: ./product-service/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8082
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+  # 2. Customer & Identity Microservice
+  - type: web
+    name: luna-user-service
+    runtime: docker
+    dockerfilePath: ./user-service/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8081
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+
+  # 3. Order Processing & Fulfillment Microservice
+  - type: web
+    name: luna-order-service
+    runtime: docker
+    dockerfilePath: ./order-service/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8083
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        fromService:
+          type: web
+          name: luna-product-service
+          property: host
+
+  # 4. Spring Cloud API Gateway (Public Ingress)
+  - type: web
+    name: luna-gateway
+    runtime: docker
+    dockerfilePath: ./luna-gateway/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: JWT_SECRET
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        fromService:
+          type: web
+          name: luna-product-service
+          property: host
+      - key: USER_SERVICE_URL
+        fromService:
+          type: web
+          name: luna-user-service
+          property: host
+      - key: ORDER_SERVICE_URL
+        fromService:
+          type: web
+          name: luna-order-service
+          property: host

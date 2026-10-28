@@ -1,0 +1,13 @@
+**/.git
+**/.gitignore
+**/.idea
+**/.vscode
+**/target
+**/node_modules
+**/dist
+**/.DS_Store
+*.md
+Luna-api-spec/
+Luna-plan/
+Luna-platform/
+Luna-rule/
