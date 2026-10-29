@@ -2,6 +2,54 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/products/:path*",
+      "destination": "https://luna-product-service.onrender.com/api/products/:path*"
+    },
+    {
+      "source": "/api/products",
+      "destination": "https://luna-product-service.onrender.com/api/products"
+    },
+    {
+      "source": "/api/categories/:path*",
+      "destination": "https://luna-product-service.onrender.com/api/categories/:path*"
+    },
+    {
+      "source": "/api/categories",
+      "destination": "https://luna-product-service.onrender.com/api/categories"
+    },
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://luna-user-service.onrender.com/api/auth/:path*"
+    },
+    {
+      "source": "/api/auth",
+      "destination": "https://luna-user-service.onrender.com/api/auth"
+    },
+    {
+      "source": "/api/account/:path*",
+      "destination": "https://luna-user-service.onrender.com/api/account/:path*"
+    },
+    {
+      "source": "/api/account",
+      "destination": "https://luna-user-service.onrender.com/api/account"
+    },
+    {
+      "source": "/api/users/:path*",
+      "destination": "https://luna-user-service.onrender.com/api/users/:path*"
+    },
+    {
+      "source": "/api/orders/:path*",
+      "destination": "https://luna-order-service.onrender.com/api/orders/:path*"
+    },
+    {
+      "source": "/api/orders",
+      "destination": "https://luna-order-service.onrender.com/api/orders"
+    },
+    {
+      "source": "/api/admin/orders/:path*",
+      "destination": "https://luna-order-service.onrender.com/api/admin/orders/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
