@@ -15,12 +15,29 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach JWT token and user identity headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('luna_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      try {
+        const savedUser = localStorage.getItem('luna_user');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          if (user?.id) {
+            config.headers['X-User-Id'] = user.id;
+          }
+          if (user?.email) {
+            config.headers['X-User-Email'] = user.email;
+          }
+          if (user?.role) {
+            config.headers['X-User-Role'] = user.role;
+          }
+        }
+      } catch (e) {
+        // Ignore parse error
+      }
     }
     return config;
   },
