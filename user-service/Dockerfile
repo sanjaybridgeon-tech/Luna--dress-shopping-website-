@@ -2,6 +2,8 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
+ENV MAVEN_OPTS="-Xmx384m -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+
 # Copy parent and module POMs for dependency resolution
 COPY pom.xml .
 COPY luna-gateway/pom.xml luna-gateway/
@@ -28,4 +30,4 @@ COPY --from=builder /app/user-service/target/*.jar app.jar
 
 EXPOSE 8081
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx384m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
