@@ -37,8 +37,9 @@ public record ProductRequest(
         @NotNull(message = "Gender is required (MEN, WOMEN, or UNISEX)")
         Gender gender,
 
-        @NotBlank(message = "Category slug is required")
         String categorySlug,
+
+        Long categoryId,
 
         @Size(max = 1000, message = "Image URL cannot exceed 1000 characters")
         String imageUrl,

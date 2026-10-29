@@ -107,13 +107,15 @@ export default function AdminProducts() {
     setSubmitting(true);
     setErrorMessage('');
 
+    const selectedCategory = categories.find((c) => String(c.id) === String(formCategoryId));
     const payload = {
       name: formName.trim(),
       description: formDesc.trim(),
       price: parseFloat(formPrice),
-      brand: formBrand.trim(),
+      brand: formBrand.trim() || 'Luna',
       gender: formGender,
       categoryId: parseInt(formCategoryId, 10),
+      categorySlug: selectedCategory ? selectedCategory.slug : 'evening-dresses',
       imageUrl: formImageUrl.trim(),
     };
 
@@ -131,7 +133,12 @@ export default function AdminProducts() {
       setTimeout(() => setFeedbackMessage(''), 4000);
     } catch (err) {
       console.error('Failed to save product', err);
-      setErrorMessage(err.response?.data?.detail || 'Failed to save product changes.');
+      let msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to save product changes.';
+      if (err.response?.data?.errors) {
+        const errorList = Object.entries(err.response.data.errors).map(([field, reason]) => `${field}: ${reason}`);
+        if (errorList.length > 0) msg = errorList.join('. ');
+      }
+      setErrorMessage(msg);
     } finally {
       setSubmitting(false);
     }

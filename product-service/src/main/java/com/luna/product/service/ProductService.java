@@ -49,8 +49,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
-        Category category = categoryRepository.findBySlug(request.categorySlug())
-                .orElseThrow(() -> new CategoryNotFoundException(request.categorySlug()));
+        Category category = resolveCategory(request);
 
         Product product = Product.create(
                 request.name().trim(),
@@ -116,8 +115,7 @@ public class ProductService {
         Product product = productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
-        Category category = categoryRepository.findBySlug(request.categorySlug())
-                .orElseThrow(() -> new CategoryNotFoundException(request.categorySlug()));
+        Category category = resolveCategory(request);
 
         product.update(
                 request.name().trim(),
@@ -131,6 +129,23 @@ public class ProductService {
 
         Product saved = productRepository.save(product);
         return toProductResponse(saved);
+    }
+
+    private Category resolveCategory(ProductRequest request) {
+        if (request.categorySlug() != null && !request.categorySlug().isBlank()) {
+            var cat = categoryRepository.findBySlug(request.categorySlug().trim());
+            if (cat.isPresent()) {
+                return cat.get();
+            }
+        }
+        if (request.categoryId() != null) {
+            var cat = categoryRepository.findById(request.categoryId());
+            if (cat.isPresent()) {
+                return cat.get();
+            }
+        }
+        String ref = request.categorySlug() != null ? request.categorySlug() : String.valueOf(request.categoryId());
+        throw new CategoryNotFoundException(ref != null && !ref.isBlank() ? ref : "unknown");
     }
 
     @Transactional
