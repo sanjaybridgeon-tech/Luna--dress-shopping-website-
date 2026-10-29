@@ -27,9 +27,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle session expiry
+// Response interceptor to handle session expiry and reject HTML fallback responses
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const contentType = response.headers?.['content-type'] || '';
+    if (
+      typeof response.data === 'string' &&
+      (contentType.includes('text/html') ||
+       response.data.trim().startsWith('<!doctype') ||
+       response.data.trim().startsWith('<html'))
+    ) {
+      return Promise.reject(new Error('Received HTML response instead of JSON. Ensure VITE_API_BASE_URL points to the backend API Gateway.'));
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       // Clear token if expired or unauthorized

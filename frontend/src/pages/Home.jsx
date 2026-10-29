@@ -6,7 +6,7 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -27,33 +27,41 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
 
-  useEffect(() => {
-    async function loadHomeData() {
-      try {
-        setLoading(true);
-        // Load categories and products in parallel
-        const [catRes, prodRes] = await Promise.all([
-          productService.getCategories().catch(() => ({ data: [] })),
-          productService.getProducts({ size: 8 }).catch(() => ({ data: { content: [] } }))
-        ]);
+  const loadHomeData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Load categories and products in parallel from live microservices
+      const [catRes, prodRes] = await Promise.all([
+        productService.getCategories().catch(() => ({ data: [] })),
+        productService.getProducts({ size: 8 }).catch(() => ({ data: { content: [] } }))
+      ]);
 
-        setCategories(catRes.data || []);
-        const productsList = prodRes.data?.content || prodRes.data || [];
-        setFeaturedProducts(productsList);
-      } catch (err) {
-        console.error('Failed to load home page catalog data', err);
-      } finally {
-        setLoading(false);
-      }
+      const catData = Array.isArray(catRes.data) ? catRes.data : [];
+      setCategories(catData);
+
+      const rawList = prodRes.data?.content || prodRes.data;
+      const productsList = Array.isArray(rawList) ? rawList : [];
+      setFeaturedProducts(productsList);
+    } catch (err) {
+      console.error('Failed to load home page catalog data', err);
+      setCategories([]);
+      setFeaturedProducts([]);
+    } finally {
+      setLoading(false);
     }
-
-    loadHomeData();
   }, []);
+
+  useEffect(() => {
+    loadHomeData();
+  }, [loadHomeData]);
+
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeProducts = Array.isArray(featuredProducts) ? featuredProducts : [];
 
   // Filter products for the featured section
   const filteredProducts = activeCategoryFilter === 'ALL'
-    ? featuredProducts
-    : featuredProducts.filter((p) => p.category?.slug === activeCategoryFilter);
+    ? safeProducts
+    : safeProducts.filter((p) => p.category?.slug === activeCategoryFilter);
 
   return (
     <div className="w-full">
@@ -142,48 +150,65 @@ export default function Home() {
 
         {/* Category Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.slice(0, 5).map((category, index) => (
-            <Link
-              key={category.id}
-              to={`/products?category=${category.slug}`}
-              className={`group relative overflow-hidden rounded-2xl border border-luna-sand bg-white shadow-sm hover:shadow-luxury transition-all duration-300 ${
-                index === 0 ? 'sm:col-span-2 lg:col-span-1' : ''
-              }`}
-            >
-              <div className="aspect-[4/3] overflow-hidden bg-gray-100">
-                <img
-                  src={category.imageUrl || 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800'}
-                  alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
+          {loading && safeCategories.length === 0 ? (
+            // Shimmer Loading Skeletons for Categories
+            [...Array(2)].map((_, i) => (
+              <div 
+                key={i} 
+                className="rounded-2xl border border-luna-sand bg-white overflow-hidden shadow-sm animate-pulse"
+              >
+                <div className="aspect-[4/3] bg-gradient-to-tr from-gray-100 to-gray-200" />
+                <div className="p-6 space-y-3">
+                  <div className="h-3 w-20 bg-gray-200 rounded" />
+                  <div className="h-5 w-44 bg-gray-200 rounded" />
+                  <div className="h-3 w-full bg-gray-100 rounded" />
+                </div>
               </div>
+            ))
+          ) : (
+            safeCategories.slice(0, 5).map((category, index) => (
+              <Link
+                key={category.id}
+                to={`/products?category=${category.slug}`}
+                className={`group relative overflow-hidden rounded-2xl border border-luna-sand bg-white shadow-sm hover:shadow-luxury transition-all duration-300 ${
+                  index === 0 ? 'sm:col-span-2 lg:col-span-1' : ''
+                }`}
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img
+                    src={category.imageUrl || 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800'}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
 
-              <div className="p-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between text-xs text-luna-gold-700 uppercase tracking-widest font-semibold font-sans mb-1">
-                    <span>Collection</span>
-                    {category.productCount !== undefined && (
-                      <span className="text-gray-400 font-normal">
-                        {category.productCount} Creations
-                      </span>
-                    )}
+                <div className="p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-luna-gold-700 uppercase tracking-widest font-semibold font-sans mb-1">
+                      <span>Collection</span>
+                      {category.productCount !== undefined && (
+                        <span className="text-gray-400 font-normal">
+                          {category.productCount} Creations
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-editorial font-bold text-luna-charcoal group-hover:text-luna-gold-700 transition-colors">
+                      {category.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-sans line-clamp-2 mt-1.5 leading-relaxed">
+                      {category.description}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-editorial font-bold text-luna-charcoal group-hover:text-luna-gold-700 transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-xs text-gray-500 font-sans line-clamp-2 mt-1.5 leading-relaxed">
-                    {category.description}
-                  </p>
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-luna-charcoal font-sans group-hover:text-luna-gold-700">
-                  <span>Explore Collection</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-luna-charcoal font-sans group-hover:text-luna-gold-700">
+                    <span>Explore Collection</span>
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
 
           {/* Unisex Capsule Card */}
           <Link
@@ -237,7 +262,7 @@ export default function Home() {
               >
                 All Highlights
               </button>
-              {categories.slice(0, 3).map((cat) => (
+              {safeCategories.slice(0, 3).map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategoryFilter(cat.slug)}
@@ -253,12 +278,42 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Product Cards */}
+          {/* Product Cards & Loading Intention Skeletons */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-gray-100 aspect-[3/4] rounded-xl" />
+                <div key={i} className="rounded-2xl border border-luna-sand bg-white overflow-hidden shadow-sm animate-pulse flex flex-col justify-between">
+                  <div className="aspect-[3/4] bg-gradient-to-tr from-gray-100 via-gray-200 to-gray-100" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-3 w-16 bg-gray-200 rounded" />
+                    <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-4 w-14 bg-gray-200 rounded" />
+                      <div className="h-7 w-20 bg-gray-100 rounded-full" />
+                    </div>
+                  </div>
+                </div>
               ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-16 px-4 bg-luna-cream/40 rounded-2xl border border-luna-sand max-w-xl mx-auto space-y-4">
+              <div className="w-12 h-12 rounded-full bg-luna-gold-400/10 flex items-center justify-center mx-auto text-luna-gold-600">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-editorial font-bold text-luna-charcoal">
+                Atelier Catalog is Awakening
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 font-sans max-w-md mx-auto leading-relaxed">
+                Our cloud microservices are initializing live dress inventories from the database.
+              </p>
+              <button
+                type="button"
+                onClick={() => loadHomeData()}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-luna-slate-900 text-white text-xs font-semibold uppercase tracking-wider hover:bg-luna-gold-500 hover:text-luna-slate-950 transition-colors shadow-sm font-sans"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Refresh Collection</span>
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">

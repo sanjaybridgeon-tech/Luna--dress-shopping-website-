@@ -47,9 +47,10 @@ export default function Products() {
     async function loadCategories() {
       try {
         const res = await productService.getCategories();
-        setCategories(res.data || []);
+        setCategories(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Failed to load categories', err);
+        setCategories([]);
       }
     }
     loadCategories();

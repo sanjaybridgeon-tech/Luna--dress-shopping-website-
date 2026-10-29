@@ -78,7 +78,7 @@ export default function ProductFilters({
             <span>All Categories</span>
           </button>
 
-          {categories.map((cat) => (
+          {(Array.isArray(categories) ? categories : []).map((cat) => (
             <button
               key={cat.id}
               type="button"
