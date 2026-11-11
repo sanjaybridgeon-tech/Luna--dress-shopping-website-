@@ -10,7 +10,7 @@ services:
     dockerfilePath: ./product-service/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: frankfurt
     envVars:
       - key: PORT
         value: 8082
@@ -28,7 +28,7 @@ services:
     dockerfilePath: ./user-service/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: frankfurt
     envVars:
       - key: PORT
         value: 8081
@@ -50,7 +50,7 @@ services:
     dockerfilePath: ./order-service/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: frankfurt
     envVars:
       - key: PORT
         value: 8083
@@ -73,7 +73,7 @@ services:
     dockerfilePath: ./luna-gateway/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: frankfurt
     envVars:
       - key: PORT
         value: 8080
